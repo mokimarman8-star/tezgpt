@@ -1,0 +1,16 @@
+{{- if .Values.tezgpt.imageVolume.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tezgpt.fullname" $ }}-images
+spec:
+  accessModes:
+    - {{ .Values.tezgpt.imageVolume.accessModes }}
+{{- if .Values.tezgpt.imageVolume.storageClassName }}
+  storageClassName: {{ .Values.tezgpt.imageVolume.storageClassName }}
+{{- end }}          
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.tezgpt.imageVolume.size }}
+{{- end }}

@@ -1,0 +1,104 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build TezGPT APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: npm run build:packages
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Build web client (PWA)
+        run: npm run build:client
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Add Android platform (Capacitor)
+        run: npx cap add android
+
+      - name: Apply TezGPT icons
+        run: |
+          mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi \
+                   android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi \
+                   android/app/src/main/res/mipmap-xxxhdpi \
+                   android/app/src/main/res/mipmap-anydpi-v26
+          if [ -d icons/android/mipmap ]; then
+            cp icons/android/mipmap/ic_launcher_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_96.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_144.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_192.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          fi
+          if [ -d icons/android/adaptive ]; then
+            cp icons/android/adaptive/fg_108.png  android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_foreground.png
+            cp icons/android/adaptive/bg_108.png  android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_background.png
+            cp icons/android/adaptive/fg_108.png  android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_162.png  android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_216.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_324.png  android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_432.png  android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+          fi
+          if [ -f icons/splash-512.png ]; then
+            cp icons/splash-512.png android/app/src/main/res/drawable/splash.png
+          fi
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Find APK
+        id: apk
+        run: echo "path=$(find android/app/build/outputs/apk -name '*.apk' | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tezgpt-android-apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+
+      - name: Publish APK to GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/**/*.apk
+          generate_release_notes: true
