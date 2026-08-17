@@ -1,0 +1,187 @@
+/* TezGPT — Vanilla Standalone styles (dark, brand colors) */
+
+.tg-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0e0e18;
+  color: #eceaf4;
+  font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  overflow: hidden;
+}
+
+/* header */
+.tg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #23233a;
+  background: #12121f;
+  flex-shrink: 0;
+}
+.tg-brand { display: flex; align-items: center; gap: 10px; }
+.tg-logo {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6352c7, #e9a06e);
+  font-size: 18px;
+}
+.tg-brand-name { font-weight: 700; font-size: 15px; letter-spacing: 0.2px; }
+.tg-brand-sub { font-size: 10px; color: #8d8aa8; }
+.tg-chip {
+  font-size: 10px; font-weight: 700;
+  padding: 4px 9px; border-radius: 999px;
+}
+.tg-chip.ok { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
+.tg-chip.warn { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+
+/* tabs */
+.tg-tabs {
+  display: flex; gap: 4px; padding: 8px 12px 0;
+  border-bottom: 1px solid #23233a;
+  background: #12121f;
+  flex-shrink: 0;
+}
+.tg-tab {
+  background: transparent; border: none; color: #8d8aa8;
+  font-weight: 600; font-size: 12px;
+  padding: 8px 12px; border-radius: 10px 10px 0 0;
+  cursor: pointer;
+}
+.tg-tab.active { background: #0e0e18; color: #e9a06e; }
+
+/* main */
+.tg-main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* chat */
+.tg-chat { display: flex; flex: 1; min-height: 0; }
+.tg-side {
+  width: 34%; max-width: 220px; min-width: 150px;
+  border-right: 1px solid #23233a;
+  padding: 10px; overflow-y: auto;
+  background: #12121f;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.tg-side-title { font-size: 11px; font-weight: 700; color: #8d8aa8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+.tg-side-item { display: flex; align-items: center; border-radius: 8px; overflow: hidden; }
+.tg-side-item.active { background: #1d1d33; }
+.tg-side-open {
+  flex: 1; text-align: left; background: transparent; border: none; color: #eceaf4;
+  padding: 7px 8px; font-size: 12px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tg-side-del { background: transparent; border: none; color: #5b587a; padding: 4px 8px; cursor: pointer; font-size: 11px; }
+.tg-side-del:hover { color: #f87171; }
+.tg-side-empty { font-size: 11px; color: #5b587a; padding: 6px 8px; }
+
+.tg-msgs {
+  flex: 1; min-width: 0; overflow-y: auto; padding: 14px 12px 8px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.tg-empty {
+  margin: auto; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 8px; max-width: 320px;
+}
+.tg-bot-emoji { font-size: 40px; }
+.tg-title { font-size: 20px; font-weight: 700; }
+.tg-sub { font-size: 12px; color: #8d8aa8; }
+.tg-msg { display: flex; }
+.tg-msg.user { justify-content: flex-end; }
+.tg-bubble {
+  max-width: 85%;
+  padding: 8px 12px; border-radius: 14px;
+  font-size: 13px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.tg-msg.user .tg-bubble { background: linear-gradient(135deg, #6352c7, #7a6be0); color: #fff; border-bottom-right-radius: 4px; }
+.tg-msg.assistant .tg-bubble { background: #1d1d33; color: #eceaf4; border-bottom-left-radius: 4px; }
+
+.tg-composer {
+  display: flex; gap: 8px; padding: 10px 12px;
+  border-top: 1px solid #23233a; background: #12121f;
+  flex-shrink: 0;
+}
+.tg-input {
+  flex: 1; background: #1d1d33; border: 1px solid #2c2c4a; color: #eceaf4;
+  border-radius: 12px; padding: 10px 12px; font-size: 13px;
+  font-family: inherit; resize: none; outline: none; min-height: 22px; max-height: 120px;
+}
+.tg-input:focus { border-color: #6352c7; }
+.tg-send {
+  width: 42px; height: 42px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #6352c7, #7a6be0); color: #fff;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+}
+.tg-send.stop { background: #ef4444; }
+
+/* keys */
+.tg-keys, .tg-agent { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.tg-note {
+  background: rgba(99, 82, 199, 0.12); border: 1px solid rgba(99, 82, 199, 0.35);
+  border-radius: 12px; padding: 10px 12px; font-size: 12px; color: #c9c4e8;
+}
+.tg-keycard {
+  background: #161624; border: 1px solid #23233a; border-radius: 12px;
+  padding: 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.tg-keyhead { display: flex; justify-content: space-between; align-items: center; }
+.tg-keylabel { font-weight: 700; font-size: 13px; }
+.tg-keyrow { display: flex; gap: 6px; align-items: center; }
+.tg-keyrow .tg-input { flex: 1; }
+.tg-keyhint { font-size: 11px; color: #8d8aa8; }
+
+/* agent */
+.tg-agent-form { display: flex; gap: 8px; align-items: flex-end; }
+.tg-tasklist { display: flex; flex-direction: column; gap: 8px; }
+.tg-task {
+  background: #161624; border: 1px solid #23233a; border-radius: 12px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tg-task.live { border-color: #6352c7; }
+.tg-task-top { display: flex; justify-content: space-between; font-size: 11px; }
+.tg-task-status { font-weight: 700; color: #e9a06e; }
+.tg-task-time { color: #5b587a; }
+.tg-task-prompt { font-size: 12px; }
+.tg-task-steps {
+  font-family: 'Roboto Mono', monospace; font-size: 10.5px; color: #8d8aa8;
+  background: #10101c; border-radius: 8px; padding: 8px;
+  display: flex; flex-direction: column; gap: 3px;
+  max-height: 130px; overflow-y: auto;
+}
+.tg-step { white-space: pre-wrap; word-break: break-word; }
+.tg-task-pending { font-size: 11px; color: #fbbf24; }
+
+/* buttons */
+.tg-btn {
+  background: #1d1d33; color: #eceaf4; border: 1px solid #2c2c4a;
+  border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.tg-btn.primary { background: linear-gradient(135deg, #6352c7, #7a6be0); border: none; color: #fff; }
+.tg-btn.small { padding: 6px 10px; font-size: 11px; border-radius: 8px; }
+.tg-btn.danger { border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
+.tg-btn:disabled { opacity: 0.5; }
+
+/* footer */
+.tg-footer {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 8px 14px; border-top: 1px solid #23233a; background: #12121f;
+  font-size: 10px; color: #5b587a; flex-shrink: 0;
+}
+.tg-foot { display: flex; align-items: center; gap: 6px; }
+.tg-link { color: #8b7de8; text-decoration: none; }
+.tg-link:hover { text-decoration: underline; }
+
+/* toast */
+.tg-toast {
+  position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%) translateY(10px);
+  background: #161624; border: 1px solid #2c2c4a; color: #eceaf4;
+  padding: 9px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 9999;
+  max-width: 90vw;
+}
+.tg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }

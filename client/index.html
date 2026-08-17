@@ -190,12 +190,43 @@
         });
       })();
     </script>
-    <script
-      data-lc-rum-bootstrap="true"
-      type="module"
-      src="/src/lib/rum/bootstrap-entry.js"
-    ></script>
-    <script defer type="module" src="/src/main.jsx"></script>
+    <script>
+      /**
+       * TezGPT — entry switch.
+       * APK builds bake VITE_STANDALONE=true → vanilla engine (React app
+       * load hi nahi hota, login render ho hi nahi sakta).
+       * Web builds → poora React app.
+       */
+      window.__TEZGHT_STANDALONE__ = false;
+      try {
+        if (localStorage.getItem('tezgpt-standalone') === '1') {
+          window.__TEZGHT_STANDALONE__ = true;
+        }
+      } catch {
+        /* ignore */
+      }
+    </script>
+    <script type="module">
+      const standalone =
+        window.__TEZGHT_STANDALONE__ === true ||
+        import.meta.env.VITE_STANDALONE === 'true' ||
+        (location.protocol === 'https:' && location.hostname === 'localhost');
+      if (standalone) {
+        import('/src/standalone/entry.ts').catch(function (err) {
+          console.error('[tezgpt-standalone] boot failed', err);
+          const r = document.getElementById('root');
+          if (r) {
+            r.innerHTML =
+              '<div style="color:#fff;background:#0e0e18;font-family:sans-serif;padding:24px;text-align:center;height:100vh">' +
+              '<h2>TezGPT</h2><p>Load error: ' +
+              (err && err.message ? err.message : String(err)) +
+              '</p></div>';
+          }
+        });
+      } else {
+        import('/src/main.jsx');
+      }
+    </script>
   </head>
   <body>
     <div id="root">

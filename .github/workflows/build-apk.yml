@@ -54,6 +54,12 @@ jobs:
       - name: Add Android platform (Capacitor)
         run: npx cap add android
 
+      - name: Bump Android version (same signature → update-over-install works)
+        run: |
+          sed -i 's/versionCode 1/versionCode 3/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "3.0.0"/' android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
       - name: Apply TezGPT icons
         run: |
           mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi \
