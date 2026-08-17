@@ -8,6 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Send, Plus, KeyRound, Bot, User as UserIcon } from 'lucide-react';
 import { getSecret } from '~/lib/byok/vault';
 import { providerForKey, streamChat, buildSystemPrompt } from '~/lib/byok/provider';
+import { useSecretGuard } from '~/hooks/byok/useSecretGuard';
+import { Square } from 'lucide-react';
 import type { ChatMessage } from '~/lib/byok/provider';
 import {
   newId,
@@ -29,6 +31,8 @@ export default function QuickChat({ onOpenKeys }: QuickChatProps) {
   const [model, setModel] = useState('');
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const { guardText } = useSecretGuard();
 
   const messages = useMemo(() => convo?.messages ?? [], [convo]);
 
@@ -75,9 +79,19 @@ export default function QuickChat({ onOpenKeys }: QuickChatProps) {
     return fresh;
   }, [convo]);
 
+  const stop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
   const send = useCallback(async () => {
     const text = input.trim();
     if (!text || busy) {
+      return;
+    }
+    // TezGPT: secret guard — tokens/keys silently → Settings, kabhi AI ko nahi
+    const guard = await guardText(text);
+    if (guard.blocked) {
+      setInput('');
       return;
     }
     setBusy(true);
@@ -114,17 +128,24 @@ export default function QuickChat({ onOpenKeys }: QuickChatProps) {
       setConvo(updated);
       await saveConversation(updated);
 
+      // NOTE: empty assistant placeholder kabhi API ko nahi bhejte (Anthropic reject karta hai)
       const history: ChatMessage[] = updated.messages
-        .filter((m) => m.role !== 'system')
+        .filter((m) => m.role !== 'system' && m.content.trim() !== '')
         .slice(-20)
-        .map((m) => ({ role: m.role, content: m.content }));
+        .map((m) => ({
+          role: m.role === 'user' || m.role === 'assistant' ? m.role : 'user',
+          content: m.content,
+        }));
 
       let assistantText = '';
+      const controller = new AbortController();
+      abortRef.current = controller;
       await streamChat({
         provider,
         apiKey,
         model: model.trim() || undefined,
-        messages: [...history.slice(0, -1), { role: 'assistant' as const, content: assistantText }],
+        messages: [{ role: 'system', content: buildSystemPrompt() }, ...history],
+        signal: controller.signal,
         onDelta: (delta) => {
           assistantText += delta;
           setConvo((c) => {
@@ -154,8 +175,9 @@ export default function QuickChat({ onOpenKeys }: QuickChatProps) {
       setError(msg.slice(0, 300));
     } finally {
       setBusy(false);
+      abortRef.current = null;
     }
-  }, [input, busy, ensureConvo, model, onOpenKeys]);
+  }, [input, busy, ensureConvo, model, onOpenKeys, guardText]);
 
   return (
     <div className="flex h-full flex-col">
@@ -242,10 +264,28 @@ export default function QuickChat({ onOpenKeys }: QuickChatProps) {
                   send();
                 }
               }}
+              onPaste={async (e) => {
+                const pasted = e.clipboardData?.getData('text') ?? '';
+                const guard = await guardText(pasted);
+                if (guard.blocked) {
+                  e.preventDefault();
+                  setInput('');
+                }
+              }}
               rows={1}
-              placeholder="Message TezGPT…"
+              placeholder="Message TezGPT… (key paste ki to seedha Keys tab mein save)"
               className="min-h-[40px] flex-1 resize-none bg-transparent py-2 text-sm text-text-primary outline-none"
             />
+            {busy && (
+              <button
+                type="button"
+                onClick={stop}
+                aria-label="stop"
+                className="rounded-lg bg-red-500 p-2 text-white"
+              >
+                <Square size={16} fill="currentColor" />
+              </button>
+            )}
             <button
               type="button"
               onClick={send}

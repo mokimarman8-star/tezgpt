@@ -22,7 +22,12 @@ export function isStandalone(): boolean {
     return true;
   }
   // Capacitor Android serves the app from https://localhost
-  if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
+  // (dev server http://localhost:3080 pe full app hi chalta hai)
+  if (
+    typeof window !== 'undefined' &&
+    window.location?.protocol === 'https:' &&
+    window.location?.hostname === 'localhost'
+  ) {
     return true;
   }
   return false;

@@ -135,7 +135,7 @@ function BuildingPanel({ task, expanded, onToggle }: { task: AgentTaskRecord; ex
   );
 }
 
-export default function AgentMode() {
+export default function AgentMode({ onBack }: { onBack?: () => void }) {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('');
   const [tasks, setTasks] = useState<AgentTaskRecord[]>([]);
@@ -223,13 +223,24 @@ export default function AgentMode() {
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 px-4 py-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link
-            to="/c/new"
-            className="rounded-lg border border-border-light p-2 text-text-secondary hover:bg-surface-hover"
-            aria-label="back to chat"
-          >
-            <ArrowLeft size={16} />
-          </Link>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="rounded-lg border border-border-light p-2 text-text-secondary hover:bg-surface-hover"
+              aria-label="back to chat"
+            >
+              <ArrowLeft size={16} />
+            </button>
+          ) : (
+            <Link
+              to="/c/new"
+              className="rounded-lg border border-border-light p-2 text-text-secondary hover:bg-surface-hover"
+              aria-label="back to chat"
+            >
+              <ArrowLeft size={16} />
+            </Link>
+          )}
           <h1 className="flex items-center gap-2 text-lg font-bold text-text-primary">
             <Bot size={18} className="text-accent-primary" /> Agent Mode
           </h1>

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Bot, KeyRound, MessageSquare, ShieldCheck } from 'lucide-react';
 import QuickChat from './QuickChat';
 import AgentMode from '~/components/AgentMode/AgentMode';
+import SubtleIndicator from '~/components/Byok/SubtleIndicator';
 import ByokPanel from '~/components/Nav/SettingsTabs/Byok/ByokPanel';
 import { APP_RELEASES_URL, PLAY_STORE_URL } from '~/constants/downloadLinks';
 
@@ -65,7 +66,7 @@ export default function TezGPTStandalone() {
         {tab === 'chat' && <QuickChat onOpenKeys={() => setTab('keys')} />}
         {tab === 'agent' && (
           <div className="h-full overflow-y-auto">
-            <AgentMode />
+            <AgentMode onBack={() => setTab('chat')} />
           </div>
         )}
         {tab === 'keys' && (
@@ -99,6 +100,7 @@ export default function TezGPTStandalone() {
           </a>
         </span>
       </footer>
+      <SubtleIndicator />
     </div>
   );
 }
