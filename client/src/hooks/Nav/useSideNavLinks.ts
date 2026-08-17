@@ -9,7 +9,9 @@ import {
   ScrollText,
   ArrowRightToLine,
   SlidersHorizontal,
+  Download,
 } from 'lucide-react';
+import { APP_DOWNLOAD_URL } from '~/constants/downloadLinks';
 import {
   Permissions,
   EModelEndpoint,
@@ -105,6 +107,15 @@ export default function useSideNavLinks({
       icon: Bot,
       id: 'tezgpt-agent-mode',
       onClick: () => navigate('/agent'),
+    });
+
+    // TezGPT Download App — direct APK link
+    links.push({
+      title: 'com_nav_download_app',
+      label: '',
+      icon: Download,
+      id: 'tezgpt-download-app',
+      onClick: () => window.open(APP_DOWNLOAD_URL, '_blank', 'noopener'),
     });
 
     if (

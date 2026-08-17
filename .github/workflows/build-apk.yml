@@ -1,9 +1,11 @@
 name: Build Android APK
 
+# Har push par: build → auto tag → auto GitHub Release (APK ke saath)
+# NOTE: sirf 'main' branch ke pushes trigger karte hain (auto-tags loop nahi banayenge)
+
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -16,12 +18,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -41,6 +44,11 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
+      - name: Strip precompressed assets (fix Android duplicate-resources)
+        run: |
+          find client/dist -type f \( -name '*.gz' -o -name '*.br' \) -delete
+          echo "compressed assets removed from client/dist"
+
       - name: Add Android platform (Capacitor)
         run: npx cap add android
 
@@ -49,7 +57,8 @@ jobs:
           mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi \
                    android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi \
                    android/app/src/main/res/mipmap-xxxhdpi \
-                   android/app/src/main/res/mipmap-anydpi-v26
+                   android/app/src/main/res/mipmap-anydpi-v26 \
+                   android/app/src/main/res/drawable
           if [ -d icons/android/mipmap ]; then
             cp icons/android/mipmap/ic_launcher_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp icons/android/mipmap/ic_launcher_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -85,20 +94,39 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Find APK
-        id: apk
-        run: echo "path=$(find android/app/build/outputs/apk -name '*.apk' | head -1)" >> "$GITHUB_OUTPUT"
+      - name: Prepare APK asset
+        run: |
+          mkdir -p dist-apk
+          cp android/app/build/outputs/apk/release/app-release.apk dist-apk/tezgpt.apk
+          ls -la dist-apk
+
+      - name: Create auto tag
+        id: tag
+        run: |
+          TAG="apk-$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          git config user.name "TezGPT CI"
+          git config user.email "ci@tezgpt.app"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: TezGPT Android — ${{ steps.tag.outputs.tag }}
+          body: |
+            🤖 **TezGPT Android APK**
+            - Commit: `${{ github.sha }}`
+            - Har push par auto-generated
+            - Download karo `tezgpt.apk` → Android mein "Install from unknown sources" allow karo
+            - 📱 Play Store: coming soon
+          files: dist-apk/tezgpt.apk
+          make_latest: true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: tezgpt-android-apk
-          path: android/app/build/outputs/apk/**/*.apk
+          path: dist-apk/tezgpt.apk
           if-no-files-found: error
-
-      - name: Publish APK to GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: android/app/build/outputs/apk/**/*.apk
-          generate_release_notes: true

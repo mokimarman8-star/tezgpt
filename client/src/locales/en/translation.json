@@ -2302,5 +2302,6 @@
   "com_ui_settings_tab_byok": "BYOK Keys",
   "com_ui_settings_section_byok": "Your Keys & Tokens",
   "com_nav_agent_mode": "Agent Mode",
-  "com_ui_upload_folder": "Upload Folder"
+  "com_ui_upload_folder": "Upload Folder",
+  "com_nav_download_app": "Download App"
 }

@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { easings } from '@react-spring/web';
+
+import DownloadAppBanner from '~/components/DownloadApp/DownloadAppBanner';import { easings } from '@react-spring/web';
 import { EModelEndpoint } from 'tezgpt-data-provider';
 import { BirthdayIcon, TooltipAnchor, SplitText } from '@tezgpt/client';
 import {
@@ -214,6 +215,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
               {description}
             </div>
           ))}
+        <DownloadAppBanner />
         {selectedAgent && (
           <AgentContact
             agent={selectedAgent}
