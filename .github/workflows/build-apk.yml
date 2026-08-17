@@ -97,7 +97,10 @@ jobs:
       - name: Prepare APK asset
         run: |
           mkdir -p dist-apk
-          cp android/app/build/outputs/apk/release/app-release.apk dist-apk/tezgpt.apk
+          APK=$(find android/app/build/outputs -name '*.apk' ! -name '*unsigned*' | head -1)
+          if [ -z "$APK" ]; then APK=$(find android/app/build/outputs -name '*.apk' | head -1); fi
+          if [ -z "$APK" ]; then echo "NO APK FOUND"; find android/app/build/outputs -type f | head -20; exit 1; fi
+          cp "$APK" dist-apk/tezgpt.apk
           ls -la dist-apk
 
       - name: Create auto tag
