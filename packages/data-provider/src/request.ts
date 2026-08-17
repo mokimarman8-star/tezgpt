@@ -7,11 +7,11 @@ import * as endpoints from './api-endpoints';
 
 async function _get<T>(url: string, options?: AxiosRequestConfig): Promise<T> {
   const response = await axios.get(url, { ...options });
-  return response.data;
+  return response.data as T;
 }
 
 async function _getResponse<T>(url: string, options?: AxiosRequestConfig): Promise<T> {
-  return await axios.get(url, { ...options });
+  return (await axios.get(url, { ...options })) as T;
 }
 
 async function _post(url: string, data?: any) {

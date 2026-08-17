@@ -191,7 +191,7 @@ codedb.snapshot
 scripts/activity-labels/results/
 
 # TezGPT additions
-android/
+/android/
 api/server/agent-sandbox/
 *.env
 .env
