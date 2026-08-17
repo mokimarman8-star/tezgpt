@@ -1,0 +1,35 @@
+{
+  "$schema": "https://v2-10-5.turborepo.dev/schema.json",
+  "globalDependencies": ["package-lock.json"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "!src/**/__tests__/**",
+        "!src/**/__mocks__/**",
+        "!src/**/*.test.*",
+        "!src/**/*.spec.*",
+        "scripts/**",
+        "tsdown.config.mjs",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "vite.config.ts",
+        "index.html",
+        "postcss.config.*",
+        "tailwind.config.*",
+        "package.json"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "@tezgpt/data-schemas#build": {
+      "dependsOn": ["^build", "tezgpt-data-provider#build"]
+    },
+    "@tezgpt/api#build": {
+      "dependsOn": ["^build", "tezgpt-data-provider#build", "@tezgpt/data-schemas#build"]
+    },
+    "@tezgpt/client#build": {
+      "dependsOn": ["^build", "tezgpt-data-provider#build"]
+    }
+  }
+}

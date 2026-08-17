@@ -1,0 +1,153 @@
+name: Build Android APK
+
+# Har push par: build → auto tag → auto GitHub Release (APK ke saath)
+# NOTE: sirf 'main' branch ke pushes trigger karte hain (auto-tags loop nahi banayenge)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build TezGPT APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: npm run build:packages
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Build web client (PWA)
+        run: npm run build:client
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Strip precompressed assets (fix Android duplicate-resources)
+        run: |
+          find client/dist -type f \( -name '*.gz' -o -name '*.br' \) -delete
+          echo "compressed assets removed from client/dist"
+
+      - name: Add Android platform (Capacitor)
+        run: npx cap add android
+
+      - name: Apply TezGPT icons
+        run: |
+          mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi \
+                   android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi \
+                   android/app/src/main/res/mipmap-xxxhdpi \
+                   android/app/src/main/res/mipmap-anydpi-v26 \
+                   android/app/src/main/res/drawable
+          if [ -d icons/android/mipmap ]; then
+            cp icons/android/mipmap/ic_launcher_48.png  android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_72.png  android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_96.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_144.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            cp icons/android/mipmap/ic_launcher_192.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          fi
+          if [ -d icons/android/adaptive ]; then
+            cp icons/android/adaptive/fg_108.png  android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_foreground.png
+            cp icons/android/adaptive/bg_108.png  android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_background.png
+            cp icons/android/adaptive/fg_108.png  android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_162.png  android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_216.png  android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_324.png  android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+            cp icons/android/adaptive/fg_432.png  android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+          fi
+          if [ -f icons/splash-512.png ]; then
+            cp icons/splash-512.png android/app/src/main/res/drawable/splash.png
+          fi
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK (release keystore from Secrets)
+        env:
+          TEZGPT_KEYSTORE_B64: ${{ secrets.TEZGPT_KEYSTORE_B64 }}
+          TEZGPT_KEYSTORE_PASSWORD: ${{ secrets.TEZGPT_KEYSTORE_PASSWORD }}
+          TEZGPT_KEY_ALIAS: ${{ secrets.TEZGPT_KEY_ALIAS }}
+          TEZGPT_KEY_PASSWORD: ${{ secrets.TEZGPT_KEY_PASSWORD }}
+        run: |
+          set -e
+          echo "$TEZGPT_KEYSTORE_B64" | base64 -d > release.keystore
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -r | head -1)
+          ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -name zipalign | sort -r | head -1)
+          echo "using: $APKSIGNER"
+          APK=$(find android/app/build/outputs -name '*.apk' ! -name '*unsigned*' | head -1)
+          if [ -z "$APK" ]; then APK=$(find android/app/build/outputs -name '*.apk' | head -1); fi
+          if [ -z "$APK" ]; then echo "NO APK FOUND"; find android/app/build/outputs -type f | head -20; exit 1; fi
+          echo "signing: $APK"
+          mkdir -p dist-apk
+          "$ZIPALIGN" -f -p 4 "$APK" aligned.apk
+          "$APKSIGNER" sign --ks release.keystore \
+            --ks-pass "pass:$TEZGPT_KEYSTORE_PASSWORD" \
+            --key-pass "pass:$TEZGPT_KEY_PASSWORD" \
+            --ks-key-alias "$TEZGPT_KEY_ALIAS" \
+            --out dist-apk/tezgpt.apk aligned.apk
+          "$APKSIGNER" verify dist-apk/tezgpt.apk
+          echo "APK SIGNED OK (v2/v3)"
+          ls -la dist-apk
+
+      - name: Create auto tag
+        id: tag
+        run: |
+          TAG="apk-$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          git config user.name "TezGPT CI"
+          git config user.email "ci@tezgpt.app"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: TezGPT Android — ${{ steps.tag.outputs.tag }}
+          body: |
+            🤖 **TezGPT Android APK**
+            - Commit: `${{ github.sha }}`
+            - Har push par auto-generated
+            - Download karo `tezgpt.apk` → Android mein "Install from unknown sources" allow karo
+            - 📱 Play Store: coming soon
+          files: dist-apk/tezgpt.apk
+          make_latest: true
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tezgpt-android-apk
+          path: dist-apk/tezgpt.apk
+          if-no-files-found: error
