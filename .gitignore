@@ -196,3 +196,8 @@ api/server/agent-sandbox/
 *.env
 .env
 capacitor.config.json
+
+# signing keys (NEVER commit)
+*.keystore
+*.jks
+signing/

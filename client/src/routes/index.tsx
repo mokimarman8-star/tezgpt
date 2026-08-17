@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import {
   Login,
@@ -19,8 +20,15 @@ import dashboardRoutes from './Dashboard';
 import WithRum from '~/lib/rum/WithRum';
 import ShareRoute from './ShareRoute';
 import ChatRoute from './ChatRoute';
+import { isStandalone } from '~/lib/byok/standalone';
+import TezGPTStandalone from '~/components/Standalone/TezGPTStandalone';
 import Search from './Search';
 import Root from './Root';
+
+/** TezGPT: standalone (BYOK/no-server) mode renders the local-first Home. */
+function StandaloneSwitch({ children }: { children: ReactNode }) {
+  return isStandalone() ? <TezGPTStandalone /> : <>{children}</>;
+}
 
 const AuthLayout = () => (
   <AuthContextProvider>
@@ -125,7 +133,11 @@ export const router = createBrowserRouter(
         dashboardRoutes,
         {
           path: '/',
-          element: <Root />,
+          element: (
+            <StandaloneSwitch>
+              <Root />
+            </StandaloneSwitch>
+          ),
           children: [
             {
               index: true,
