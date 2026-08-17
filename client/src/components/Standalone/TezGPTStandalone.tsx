@@ -26,7 +26,10 @@ export default function TezGPTStandalone() {
   ];
 
   return (
-    <div className="flex h-full min-h-screen flex-col bg-surface-primary">
+    <div
+      data-tezgpt-standalone-marker="v2"
+      className="flex h-full min-h-screen flex-col bg-surface-primary"
+    >
       {/* header */}
       <header className="flex items-center justify-between border-b border-border-light px-4 py-3">
         <div className="flex items-center gap-2">

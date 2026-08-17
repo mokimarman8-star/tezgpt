@@ -43,6 +43,8 @@ jobs:
         run: npm run build:client
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          # APK build → hamesha standalone BYOK home (login kabhi nahi dikhega)
+          VITE_STANDALONE: 'true'
 
       - name: Strip precompressed assets (fix Android duplicate-resources)
         run: |

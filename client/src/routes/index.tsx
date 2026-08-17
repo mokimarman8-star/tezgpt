@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import {
@@ -25,9 +26,45 @@ import TezGPTStandalone from '~/components/Standalone/TezGPTStandalone';
 import Search from './Search';
 import Root from './Root';
 
-/** TezGPT: standalone (BYOK/no-server) mode renders the local-first Home. */
+/** TezGPT: standalone (BYOK/no-server) mode renders the local-first Home.
+ *  Static checks pehle; phir server probe: agar /api/config valid JSON nahi
+ *  deta (jaise static hosting / broken deploy), to bhi Home dikhao —
+ *  user ko kabhi dead login screen nahi milegi. */
 function StandaloneSwitch({ children }: { children: ReactNode }) {
-  return isStandalone() ? <TezGPTStandalone /> : <>{children}</>;
+  const [mode, setMode] = useState<'full' | 'standalone' | 'unknown'>(
+    () => (isStandalone() ? 'standalone' : 'unknown'),
+  );
+
+  useEffect(() => {
+    if (mode !== 'unknown') {
+      return;
+    }
+    let cancelled = false;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    fetch('/api/config', { signal: ctrl.signal, cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((json) => {
+        if (!cancelled && json && typeof json === 'object') {
+          setMode('full');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMode('standalone');
+        }
+      })
+      .finally(() => clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mode]);
+
+  if (mode === 'standalone') {
+    return <TezGPTStandalone />;
+  }
+  return <>{children}</>;
 }
 
 const AuthLayout = () => (
