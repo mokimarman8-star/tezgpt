@@ -102,7 +102,6 @@ export default defineConfig(({ command }) => ({
           'assets/favicon*.png',
           'assets/icon-*.png',
           'assets/apple-touch-icon*.png',
-          'assets/maskable-icon.png',
           'manifest.webmanifest',
         ],
         globIgnores: [
@@ -143,8 +142,8 @@ export default defineConfig(({ command }) => ({
         name: 'TezGPT',
         short_name: 'TezGPT',
         display: 'standalone',
-        background_color: '#000000',
-        theme_color: '#009688',
+        background_color: '#0e0e18',
+        theme_color: '#0e0e18',
         icons: [
           {
             src: 'assets/favicon-32x32.png',
@@ -164,6 +163,11 @@ export default defineConfig(({ command }) => ({
           {
             src: 'assets/icon-192x192.png',
             sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'assets/icon-512x512.png',
+            sizes: '512x512',
             type: 'image/png',
           },
           {
